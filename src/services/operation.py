@@ -9,7 +9,7 @@ class OperationService:
         self.connection = db.connection
 
     def create_operation(self, data: dict) -> int:
-        """Создание операцию в БД"""
+        """Создание операции в БД"""
 
         values = [value for value in data.values()]
         keys = [key for key in data.keys()]
@@ -25,6 +25,12 @@ class OperationService:
         else:
             return cursor.lastrowid
 
-    def read(self, operation: dict) -> dict:
+    def read(self, category_id: dict) -> dict:
         """Чтение информации об операции в БД"""
+        query = f"SELECT id, type, date, amount, description FROM operation WHERE category_id = ?"
+        params = (category_id, )
+        with self.connection as connection:
+            cursor = connection.execute(query, params)
+            category = cursor.fetchone()
+            return dict(category)
 
