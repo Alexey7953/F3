@@ -24,3 +24,7 @@ class OperationService:
             raise OperationNotFound
         else:
             return cursor.lastrowid
+
+    def read(self, operation: dict) -> dict:
+        """Чтение информации об операции в БД"""
+

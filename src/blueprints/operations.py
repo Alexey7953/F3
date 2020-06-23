@@ -10,8 +10,10 @@ from flask import (
 )
 from flask.views import MethodView
 
-from src.database import db
+from src.services.categories import CategoriesService
 
+from src.database import db
+from src.services.operation import OperationService
 
 bp = Blueprint('operations', __name__)
 
@@ -21,17 +23,12 @@ class OperationsView(MethodView):
         pass
 
     def post(self):
+        # Проверка авторизации
+        account_id = session.get('id')
+        if not account_id:
+            return '', 403
+
         request_json = request.json
-
-        type = request_json.get('type')
-
-        category_id = request_json.get('category_id')
-        category_dict = {}
-        if category_id:
-
-
-
-
 
         # Обработка даты
         date = request_json.get('date')
@@ -40,20 +37,30 @@ class OperationsView(MethodView):
         else:
             date = int(time.time())
 
-        # Обработка кол-во
-        amount = request_json.get('amount')
-        # Обработка описания
-        description = request_json.get('description')
+        # Обработка данных и валидация
+        try:
+            operation = {
+                "date": date,
+                "type": request_json['type'],
+                "description": request_json['description'],
+                "amount": request_json['amount'],
+                "category_id": request_json.get('category_id')
+            }
+        except KeyError as e:
+            return "", 400
 
+        # Проверка существования указанной категории
+        category_service = CategoriesService()
+        if not category_service.check(category_id=operation['category_id'], account_id=account_id):
+            return "", 403
 
-        operation = {
-    "id": operation_id,
-    "type": operation_dict["type"],
-    "category": category_dict or "none",
-    "date": date,
-    "amount": operation_dict["amount"],
-    "description": description or "none",
-}
+        # Запись операции в базу
+        operation_service = OperationService()
+        operation_service.create_operation(data=operation)
+
+        # Чтение операции из базы
+        response = operation_service.read(operation=operation)
+        return jsonify(response), 201
 
 
 class OperationView(MethodView):
@@ -62,7 +69,6 @@ class OperationView(MethodView):
 
     def delete(self, operation_id):
         pass
-
 
 
 bp.add_url_rule('', view_func=OperationsView.as_view('operations'))
