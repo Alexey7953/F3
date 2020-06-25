@@ -62,6 +62,9 @@ class OperationsView(MethodView):
         response = operation_service.read(operation=operation)
         return jsonify(response), 201
 
+        # Чтение информации об операции в БД
+
+
 
 class OperationView(MethodView):
     def patch(self, operation_id):
