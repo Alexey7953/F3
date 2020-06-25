@@ -49,21 +49,28 @@ class OperationsView(MethodView):
         except KeyError as e:
             return "", 400
 
-        # Проверка существования указанной категории
+        # Чтение операции из базы
         category_service = CategoriesService()
-        if not category_service.check(category_id=operation['category_id'], account_id=account_id):
+        category = category_service.read(category_id=operation['category_id'], account_id=account_id)
+        if not category:
             return "", 403
+
+        # Получение имени родительской категории
+        parent_category = category_service.read(category_id=category.pop('parent_id'), account_id=account_id)
+
+        # Формирование сведений о категории
+        category.pop('account_id')
+        category['parent_name'] = parent_category.get('name')
 
         # Запись операции в базу
         operation_service = OperationService()
         operation_service.create_operation(data=operation)
 
-        # Чтение операции из базы
-        response = operation_service.read(operation=operation)
-        return jsonify(response), 201
+        # Формируем ответ
+        operation.pop('category_id')
+        operation['category'] = category
 
-        # Чтение информации об операции в БД
-
+        return jsonify(operation), 201
 
 
 class OperationView(MethodView):

@@ -25,12 +25,4 @@ class OperationService:
         else:
             return cursor.lastrowid
 
-    def read(self, category_id: dict) -> dict:
-        """Чтение информации об операции в БД"""
-        query = f"SELECT id, type, date, amount, description FROM operation WHERE category_id = ?"
-        params = (category_id, )
-        with self.connection as connection:
-            cursor = connection.execute(query, params)
-            category = cursor.fetchone()
-            return dict(category)
 

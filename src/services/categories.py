@@ -39,7 +39,7 @@ class CategoriesService:
 
         return data
 
-    def check(self, category_id: int, account_id: int):
+    def read(self, category_id: int, account_id: int) -> dict:
         """Проверка существования категории"""
         query = 'SELECT * FROM category WHERE id = ? AND account_id = ?'
         params = (category_id, account_id)
@@ -48,7 +48,9 @@ class CategoriesService:
             cursor = connection.execute(query, params)
             category = cursor.fetchone()
 
-        if category:
-            return True
-        return False
+        if not category:
+            return {}
+        return dict(category)
+
+
 
