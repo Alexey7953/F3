@@ -6,97 +6,16 @@ from flask import (
     jsonify,
     session,
 )
-import sqlite3
+
 from flask.views import MethodView
 from src.services.categories import CategoriesService
-from src.database import db
 
 bp = Blueprint('categories', __name__)
 
 
 class CategoriesView(MethodView):
     def post(self):
-        session_id = session.get('user_id')
-        if session_id is None:
-            return '', 403
-        account_id = session_id
-
-        request_json = request.json
-
-        # Проверка заполнены ли переданные поля, иначе -> 400
-        for value in request_json.values():
-            if not value:
-                return '', 400
-
-        name = request_json.get('name')
-        parent_id = request_json.get('parent_id')
-
-        with db.connection as con:
-
-            # Проверка есть ли категория с id равным parent_id иначе -> 403
-            if parent_id:
-                cur_parent = con.execute(f'''
-                            SELECT name, account_id
-                            FROM category
-                            WHERE id = ?''',
-                                         (parent_id,),
-                                         )
-                result_parent = cur_parent.fetchone()
-                if result_parent is None:
-                    return '', 403
-                # Если пользователю не принадлежит родительская категория -> 403
-                if result_parent["account_id"] != account_id:
-                    return '', 403
-
-            # Если не передан parent_id
-            if not parent_id:
-                parent_id = "none"
-
-            # Проверяем если вдруг такая категория создана, возвращаем её
-            cur_categories = con.execute(f'''
-                        SELECT id, name, parent_id
-                        FROM category
-                        WHERE name = ? AND account_id = ?''',
-                                         (name, account_id),
-                                         )
-            categories = cur_categories.fetchall()
-
-            if not categories:
-                try:
-                    con.execute(
-                        'INSERT INTO category (name, parent_id, account_id) '
-                        'VALUES (?, ?, ?)',
-                        (name, parent_id, account_id),
-                    )
-                    con.commit()
-                except sqlite3.IntegrityError:
-                    return '', 409
-                cur_categories = con.execute(f'''
-                            SELECT id, name, parent_id
-                            FROM category
-                            WHERE name = ? AND account_id = ?''',
-                                             (name, account_id),
-                                             )
-                categories = cur_categories.fetchall()
-            dict_category = [dict(category) for category in categories]
-            rows = {key: value for key, value in dict_category[0].items()}
-            # заменяем parent_id на parent_name
-            parent_name = rows['parent_id']
-            if parent_name != "none":
-                cur_parent = con.execute(f'''
-                            SELECT name
-                            FROM category
-                            WHERE id = ?''',
-                                         (parent_name,),
-                                         )
-                parent = cur_parent.fetchall()
-                dict_parent = [dict(par) for par in parent]
-                rows = {key: value for key, value in dict_parent[0].items()}
-                parent_name = rows['name']
-            rows = {key: value for key, value in dict_category[0].items()
-                    if "parent_id" not in key}
-
-            return jsonify({"parent_name": parent_name, **rows}), 201
+        pass
 
 
 class CategoryView(MethodView):
@@ -119,8 +38,6 @@ class CategoryView(MethodView):
         if name is not None:
             new_data['name'] = name
         if parent_id is not None:
-            if parent_id == 'null':
-                parent_id = None
             new_data['parent_id'] = parent_id
 
         service = CategoriesService()
@@ -128,71 +45,14 @@ class CategoryView(MethodView):
         if not service.check(category_id, account_id):
             return '', 404
 
-        if not service.check(parent_id, account_id):
+        if parent_id is not None and not service.check(parent_id, account_id):
             return '', 400
 
         result = service.edit(data=new_data)
         return jsonify(result), 200
 
     def delete(self, category_id):
-        # Если пользователь не авторизован -> 403
-        session_id = session.get('user_id')
-        if session_id is None:
-            return '', 403
-
-        con = db.connection
-        try:
-            # Ищем категорию
-            cur_category = con.execute(
-                'SELECT account_id '
-                'FROM category '
-                'WHERE id = ? ',
-                (category_id,),
-            )
-            result_category = cur_category.fetchone()
-            # Если категория не найдена -> 404
-            if result_category is None:
-                return '', 404
-            # Если пользователю не принадлежит категория -> 403
-            if result_category["account_id"] != session_id:
-                return '', 403
-
-            # Устанавливаем принадлежность категории таблице operation если нет -> 403
-            cur_operation_category = con.execute(
-                'SELECT category_id '
-                'FROM operation '
-                'WHERE category_id = ? ',
-                (category_id,),
-            )
-            result_operation_category = cur_operation_category.fetchone()
-            if result_operation_category:
-                return '', 403
-
-            # Удаление категории
-            con.execute(f"""
-                       DELETE FROM category
-                       WHERE id = {category_id}
-                   """)
-
-            # Ищем дочернюю категорию в таблице category
-            cur_category = con.execute(
-                'SELECT id '
-                'FROM category '
-                'WHERE parent_id = ? ',
-                (category_id,),
-            )
-            result_category = cur_category.fetchone()
-            if result_category:
-                # Запись в таблицу category parent_id = None
-                category_query = f'UPDATE category SET parent_id = ? WHERE id = ?'
-                con.execute(category_query, (None, result_category["id"]))
-
-            con.commit()
-
-        except sqlite3.IntegrityError:
-            return '', 403
-
-        return '', 204
+        pass
 
 
 bp.add_url_rule('', view_func=CategoriesView.as_view('categories'))

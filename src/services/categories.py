@@ -14,14 +14,23 @@ class CategoriesService:
         name = data.get('name')
 
         # Создание запроса
-        query = f"UPDATE category SET parent_id = ?"
-        params = [parent_id, ]
+        query = "UPDATE category SET "
+        params = []
+
+        if parent_id:
+            if parent_id == 'null':
+                query += " parent_id = ? "
+                params.append(None)
+            else:
+                query += " parent_id = ? "
+                params.append(parent_id)
 
         if name:
-            query += f", name = ?"
+            query += ", name = ? "
             params.append(name)
 
         query += f' WHERE account_id IS {account_id} AND id IS {category_id}'
+        params.append(account_id, category_id)
 
         with self.connection as connection:
             # Вносим изменения в БД
@@ -39,7 +48,7 @@ class CategoriesService:
 
         return data
 
-    def read(self, category_id: int, account_id: int) -> dict:
+    def check(self, category_id: int, account_id: int):
         """Проверка существования категории"""
         query = 'SELECT * FROM category WHERE id = ? AND account_id = ?'
         params = (category_id, account_id)
@@ -48,9 +57,9 @@ class CategoriesService:
             cursor = connection.execute(query, params)
             category = cursor.fetchone()
 
-        if not category:
-            return {}
-        return dict(category)
+        if category:
+            return True
+        return False
 
 
 

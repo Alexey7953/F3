@@ -1,5 +1,15 @@
 from src.database import db
-from src.exceptions.users import UserNotFound
+
+
+class UsersError(Exception):
+    service = 'users'
+
+    def __init__(self, *args):
+        super().__init__(self.service, *args)
+
+
+class UserNotFound(UsersError):
+    pass
 
 
 class UsersService:
