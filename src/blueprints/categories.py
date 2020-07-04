@@ -1,5 +1,5 @@
 from flask import (
-    request,
+request,
 )
 from flask import (
     Blueprint,
@@ -76,7 +76,7 @@ class CategoriesView(MethodView):
                 categories = cur_categories.fetchall()
             dict_category = [dict(category) for category in categories]
             rows = {key: value for key, value in dict_category[0].items()}
-            # заменяем parnt_id на parent_name
+            # заменяем parent_id на parent_name
             parent_name = "none"
             if parent_id:
                 cur_parent = con.execute(f'''

@@ -1,8 +1,4 @@
-from flask import (
-    Blueprint,
-    request,
-    session,
-)
+from flask import Blueprint, request, session
 
 from werkzeug.security import check_password_hash
 
