@@ -60,6 +60,3 @@ class CategoriesService:
         if category:
             return True
         return False
-
-
-

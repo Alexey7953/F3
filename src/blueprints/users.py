@@ -9,9 +9,9 @@ from flask import (
 )
 from flask.views import MethodView
 from werkzeug.security import generate_password_hash
-from src.services.users import UsersService, UserNotFound
+from services.users import UsersService, UserNotFound
 
-from src.database import db
+from database import db
 
 bp = Blueprint('users', __name__)
 
@@ -36,21 +36,21 @@ class UsersView(MethodView):
         password = request_json.get('password')
         password_hash = generate_password_hash(password)
 
-        # try:
-        # Запись в таблицу account
-        account_params = ', '.join([*account_dict.keys(), "password"])
-        account_values = [*account_dict.values(), password_hash]
-        account_query = f'''
-            INSERT INTO account ({account_params})
-            VAlUES (?, ?, ?, ?) 
-        '''
-        cur = con.execute(account_query, (*account_values,))
-        account_id = cur.lastrowid
+        try:
+            # Запись в таблицу account
+            account_params = ', '.join([*account_dict.keys(), "password"])
+            account_values = [*account_dict.values(), password_hash]
+            account_query = f'''
+                INSERT INTO account ({account_params})
+                VAlUES (?, ?, ?, ?) 
+            '''
+            cur = con.execute(account_query, (*account_values,))
+            account_id = cur.lastrowid
 
-        con.commit()
+            con.commit()
 
-        # except sqlite3.IntegrityError:
-        #     return '', 403
+        except sqlite3.IntegrityError:
+            return '', 500
         # Исключение пароля из вывода данных
         rows = {key: value for key, value in request_json.items()
                 if "password" not in key}
