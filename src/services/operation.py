@@ -1,7 +1,7 @@
 import sqlite3
 
-from src.database import db
-from src.exceptions.operation import OperationNotFound
+from database import db
+from exceptions.operation import OperationNotFound
 
 
 class OperationService:
@@ -14,7 +14,7 @@ class OperationService:
         values = [value for value in data.values()]
         keys = [key for key in data.keys()]
 
-        query = f"INSERT INTO operation " + ','.join(keys) + " VALUES (?, ?, ?, ?, ?)"
+        query = f"INSERT INTO operation (" + ','.join(keys) + ") VALUES (?, ?, ?, ?, ?, ?)"
 
         try:
             with self.connection as connection:
@@ -24,5 +24,4 @@ class OperationService:
             raise OperationNotFound
         else:
             return cursor.lastrowid
-
 
