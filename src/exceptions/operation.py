@@ -1,9 +1,5 @@
-class OperationError(Exception):
-    service = 'operation'
-
-    def __init__(self, *args):
-        super().__init__(self.service, *args)
+from exceptions.exceptions import ServiceError
 
 
-class OperationNotFound(OperationError):
+class OperationNotFound(ServiceError):
     pass

@@ -1,9 +1,5 @@
-class UsersError(Exception):
-    service = 'users'
-
-    def __init__(self, *args):
-        super().__init__(self.service, *args)
+from exceptions.exceptions import ServiceError
 
 
-class UserNotFound(UsersError):
+class UserNotFound(ServiceError):
     pass
